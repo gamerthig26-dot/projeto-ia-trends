@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.build/
+.deploy/
+.env
+*.tsbuildinfo
+.yarn/
+.cache/
+.abacus.donotdelete
+instrumentation-client.js
+public/abacus-viz/
