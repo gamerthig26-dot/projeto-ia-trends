@@ -1,0 +1,94 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/ia-trends/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Search {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  period    String   @default("24h")
+  status    String   @default("running")
+  trends    Trend[]
+  products  Product[]
+  opportunities Opportunity[]
+
+  @@map("searches")
+}
+
+model Trend {
+  id       String @id @default(cuid())
+  searchId String @map("search_id")
+  search   Search @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  title    String
+  source   String
+  type     String @default("geral")
+  url      String @default("")
+  rawData  Json   @default("{}") @map("raw_data")
+  opportunities Opportunity[]
+
+  @@index([searchId])
+  @@map("trends")
+}
+
+model Product {
+  id          String @id @default(cuid())
+  searchId    String @map("search_id")
+  search      Search @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  name        String
+  marketplace String
+  price       String @default("")
+  url         String @default("")
+  rawData     Json   @default("{}") @map("raw_data")
+  opportunities Opportunity[]
+
+  @@index([searchId])
+  @@map("products")
+}
+
+model Opportunity {
+  id            String @id @default(cuid())
+  searchId      String @map("search_id")
+  search        Search @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  trendId       String @map("trend_id")
+  trend         Trend  @relation(fields: [trendId], references: [id], onDelete: Cascade)
+  productId     String @map("product_id")
+  product       Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  scores        Json   @default("{}") 
+  justification String @default("")
+  scripts       Script[]
+
+  @@index([searchId])
+  @@index([trendId])
+  @@index([productId])
+  @@map("opportunities")
+}
+
+model MlToken {
+  id           String   @id @default("singleton")
+  accessToken  String   @map("access_token")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  userId       String   @default("") @map("user_id")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("ml_tokens")
+}
+
+model Script {
+  id              String   @id @default(cuid())
+  opportunityId   String   @map("opportunity_id")
+  opportunity     Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  scriptJson      Json     @map("script_json")
+  durationSeconds Float    @default(0) @map("duration_seconds")
+  videoPrompt     String   @default("") @map("video_prompt")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([opportunityId])
+  @@map("scripts")
+}
